@@ -32,6 +32,11 @@ Replay parseReplay(std::span<const std::uint8_t> bytes);
 Replay loadReplay(std::filesystem::path const& path);
 int parseTarget(std::string const& text);
 
+// GD 2.2081 counts two progress units per 240 Hz physics tick.
+constexpr std::int64_t replayFrame(std::uint32_t progress, int offset) {
+    return static_cast<std::int64_t>(progress / 2) - offset;
+}
+
 enum class RunState { Idle, Playing, Reached, Failed, Cancelled };
 class Playback {
 public:

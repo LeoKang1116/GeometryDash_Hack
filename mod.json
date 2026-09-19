@@ -3,7 +3,7 @@
     "gd": { "mac": "2.2081", "win": "2.2081" },
     "id": "leokang.target_replay",
     "name": "Target Replay",
-    "version": "v0.1.1",
+    "version": "v0.1.2",
     "developer": "leokang",
     "description": "Play a GDR macro up to a chosen percentage.",
     "settings": {

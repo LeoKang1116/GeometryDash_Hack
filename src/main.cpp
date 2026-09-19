@@ -198,8 +198,13 @@ class $modify(TargetPause, PauseLayer) {
 };
 
 class $modify(TargetGameLayer, GJBaseGameLayer) {
-    void processCommands(float dt, bool halfTick, bool lastTick) {
-        GJBaseGameLayer::processCommands(dt, halfTick, lastTick);
+    void processQueuedButtons(float dt, bool clearInputQueue) {
+        // macOS inlines processCommands into update, but calls this function
+        // on each physics step. Enqueue before the game consumes the queue.
+        dispatchReplay();
+        GJBaseGameLayer::processQueuedButtons(dt, clearInputQueue);
+    }
+    void dispatchReplay() {
         auto pl = PlayLayer::get();
         if (!pl || static_cast<GJBaseGameLayer*>(pl) != this || session.owner != pl || !session.replay ||
             session.playback.state != target::RunState::Playing ||
@@ -207,12 +212,14 @@ class $modify(TargetGameLayer, GJBaseGameLayer) {
         // Use the game's physics counter, never rendered frames. Old xdBot uses
         // levelTime * TPS + 1, matching its recorder's clock.
         auto frame = session.replay->legacyXdBot
-            ? static_cast<std::int64_t>(pl->m_gameState.m_levelTime * 240.0) + 1
-            : static_cast<std::int64_t>(pl->m_gameState.m_currentProgress);
-        frame -= session.frameOffset;
+            ? static_cast<std::int64_t>(pl->m_gameState.m_levelTime * 240.0) + 1 - session.frameOffset
+            : target::replayFrame(pl->m_gameState.m_currentProgress, session.frameOffset);
         if (frame < 0) return;
         session.injecting = true;
         session.playback.dispatch(*session.replay, frame, [this](target::Input const& input) {
+            if (session.playback.next <= 5)
+                log::info("Replay input {} at progress {}: button {}, down {}, player {}",
+                    input.frame, m_gameState.m_currentProgress, input.button, input.down, input.player2);
             bool player = input.player2;
             if (GameManager::get()->getGameVariable("0010")) player = !player;
             GJBaseGameLayer::handleButton(input.down, input.button, player);

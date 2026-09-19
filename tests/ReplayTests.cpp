@@ -47,6 +47,10 @@ std::vector<std::uint8_t> binaryFixture(std::string bot = "Test") {
 
 int main(int argc, char** argv) {
     try {
+        check(target::replayFrame(486, 0) == 243, "half-tick progress converts to 240 TPS");
+        check(target::replayFrame(487, 0) == 243, "half tick does not advance replay frame");
+        check(target::replayFrame(2, 2) == -1, "positive offset delays without unsigned underflow");
+        check(target::replayFrame(2, -2) == 3, "negative offset advances replay");
         auto r = target::parseReplay(text(fixture()));
         check(r.inputs.size() == 3 && r.inputs[0].frame == 0 && r.inputs[1].player2, "stable input sorting");
         auto packed = target::parseReplay(json::to_msgpack(fixture()));

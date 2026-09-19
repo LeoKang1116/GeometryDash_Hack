@@ -66,7 +66,8 @@ ctest --test-dir build-tests --output-on-failure
 - GDR1 JSON/MessagePack, GDR2, 손상/잘림, 목표값 검증, 동일 틱 중복 방지, 목표 도달·사망·중지·100% 완료 상태 테스트.
 - AddressSanitizer 및 UndefinedBehaviorSanitizer를 사용한 코어 테스트.
 - 공개 Zodiac `.gdr.json` 918개 입력과 Living Open `.gdr`/`.gdr2` 각각 478개 입력을 읽는 테스트.
-- **실제 게임 내 UI·재생·도달 기록 저장은 미검증입니다.** 현재 게임 설치에 Geode가 없어 실행 테스트를 하지 않았습니다. 빌드 성공을 레벨 완주 보장으로 해석해서는 안 됩니다.
+- v0.1.1 실제 macOS 실행 기록에서 Living Open 1.02% 사망까지 입력이 0개 전송된 문제를 확인했습니다. v0.1.2는 macOS에서 인라인되는 `processCommands` 대신 실제 호출되는 `processQueuedButtons`에서 입력을 전송하고, 2.2081의 반 틱 진행 카운터를 240 TPS 프레임으로 변환합니다.
+- **v0.1.2의 실제 레벨 완주·목표 도달은 아직 미검증입니다.** 빌드 성공을 레벨 완주 보장으로 해석해서는 안 됩니다.
 
 게임에서 확인할 항목: 간단한 레벨의 정상 매크로로 목표 1%/50%/100%, 목표 전 사망, 중간 일시정지와 재개, Stop 후 수동 조작, 다른 레벨 매크로 거부, 게임 종료 후 기록 유지 여부.
 
