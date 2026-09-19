@@ -1,0 +1,18 @@
+{
+    "geode": "5.8.2",
+    "gd": { "mac": "2.2081", "win": "2.2081" },
+    "id": "leokang.target_replay",
+    "name": "Target Replay",
+    "version": "v0.1.0",
+    "developer": "leokang",
+    "description": "Play a GDR macro up to a chosen percentage.",
+    "settings": {
+        "target-percent": {
+            "name": "Target percent",
+            "type": "int",
+            "default": 73,
+            "min": 1,
+            "max": 100
+        }
+    }
+}
