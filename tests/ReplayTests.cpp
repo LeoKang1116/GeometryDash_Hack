@@ -27,7 +27,7 @@ json fixture() {
                               {{"frame",0},{"btn",1},{"2p",true},{"down",true}}})}};
 }
 // Independent wire-format fixture, including separated P1 and P2 delta streams.
-std::vector<std::uint8_t> binaryFixture() {
+std::vector<std::uint8_t> binaryFixture(std::string bot = "Test") {
     std::vector<std::uint8_t> b{'G','D','R'};
     auto var = [&](std::uint64_t n) {
         do { auto v = n & 127; n >>= 7; b.push_back(v | (n ? 128 : 0)); } while(n);
@@ -39,7 +39,7 @@ std::vector<std::uint8_t> binaryFixture() {
         b.insert(b.end(),bytes.begin(),bytes.end());
     };
     var(2); str(""); str("Author"); str(""); fp(10.f); var(22081); fp(240.0);
-    var(42); var(0); var(0); var(0); str("Test"); var(1); var(123); str("Test Level");
+    var(42); var(0); var(0); var(0); str(bot); var(1); var(123); str("Test Level");
     var(0); var(0); var(3); var(2);
     var(1); var(24); var(7); // P1 down @0, up @12; P2 down @3.
     return b;
@@ -52,10 +52,12 @@ int main(int argc, char** argv) {
         auto packed = target::parseReplay(json::to_msgpack(fixture()));
         check(packed.levelId == r.levelId && packed.inputs.size() == 3, "MessagePack import");
         auto xd = fixture(); xd["bot"]["name"] = "xdBot";
-        check(target::parseReplay(text(xd)).inputs[0].player2, "legacy xdBot player convention");
+        check(!target::parseReplay(text(xd)).inputs[0].player2, "legacy xdBot player convention");
         auto bytes = binaryFixture();
         auto binary = target::parseReplay(bytes);
         check(binary.seed == 42 && binary.inputs.size() == 3 && binary.inputs[1].frame == 3 && binary.inputs[1].player2, "GDR2 player delta reset");
+        auto xdBinary = target::parseReplay(binaryFixture("xdBot"));
+        check(!xdBinary.inputs[1].player2, "xdBot GDR2 player convention");
         for (std::size_t n = 0; n < bytes.size(); ++n)
             rejects([&] { target::parseReplay(std::span(bytes).first(n)); }, "truncated GDR2 accepted");
         auto garbage = bytes; garbage.push_back(0);
@@ -101,7 +103,13 @@ int main(int argc, char** argv) {
         check(events == 2,"cancelled inputs emitted");
         for (int i = 1; i < argc; ++i) {
             auto actual = target::loadReplay(argv[i]);
-            std::cout << "Imported " << actual.levelName << ": " << actual.inputs.size() << " inputs\n";
+            std::cout << "Imported " << actual.levelName << ": " << actual.inputs.size()
+                      << " inputs, bot=" << actual.bot << ", corrections=" << actual.hasCorrections << "\n";
+            for (std::size_t n = 0; n < std::min<std::size_t>(actual.inputs.size(), 8); ++n) {
+                auto const& input = actual.inputs[n];
+                std::cout << "  " << input.frame << " " << input.button << " "
+                          << input.player2 << " " << input.down << "\n";
+            }
         }
         std::cout << "All replay parser and playback tests passed.\n";
         return EXIT_SUCCESS;

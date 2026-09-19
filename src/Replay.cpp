@@ -99,6 +99,13 @@ Replay parseBinary(std::span<const std::uint8_t> bytes) {
         r.inputs.push_back({frame, 1, i >= p1Count, bool(packed & 1)});
         if (!tag.empty()) in.skip(in.integer());
     }
+    // GJBaseGameLayer::handleButton's third argument uses the historical
+    // Geometry Dash convention used by xdBot: false is player 1. xdBot's
+    // GDR2 exporter stores the standardized player2 flag, so normalize it
+    // before playback. GDR1 xdBot already follows the historical convention.
+    if (r.bot == "xdBot") {
+        for (auto& input : r.inputs) input.player2 = !input.player2;
+    }
     require(in.remaining() == 0, "Unexpected trailing GDR2 data.");
     return r;
 }
@@ -156,9 +163,6 @@ Replay parseLegacy(std::span<const std::uint8_t> bytes) {
         auto button = unsignedField(input.at("btn"));
         require(button == 1, "Only Classic jump inputs are supported.");
         auto p2 = input.at("2p").get<bool>();
-        // Legacy xdBot serialized the game's isPlayer1 argument in the 2p field.
-        // GDR2 and standard GDR1 use the documented player2 convention.
-        if (r.legacyXdBot) p2 = !p2;
         r.inputs.push_back({frame, 1, p2, input.at("down").get<bool>()});
     }
     return r;

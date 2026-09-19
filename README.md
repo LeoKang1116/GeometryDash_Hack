@@ -6,7 +6,7 @@ Geometry Dash에서 기존 매크로를 불러와 **원하는 진행률까지 �
 ## 설치와 사용
 
 1. [Geode](https://geode-sdk.org/)를 설치합니다. 개발 기준은 **Geode 5.8.2 / Geometry Dash 2.2081**입니다.
-2. 빌드 결과인 `build-mac/leokang.target_replay.geode`를 Geode의 모드 파일 가져오기로 설치하고 게임을 재시작합니다. 이 패키지는 **Apple Silicon + Intel macOS**용입니다.
+2. 빌드 결과인 `build-mac/leokang.target_replay.geode`를 Geode의 모드 파일 가져오기로 설치하고 게임을 재시작합니다. 이 패키지는 **Apple Silicon + Intel macOS**용입니다. 기존 버전이 있다면 새 파일을 가져온 뒤 게임을 완전히 다시 시작합니다.
 3. 매크로에 해당하는 레벨을 **Normal 모드**로 열고 일시정지합니다.
 4. 오른쪽 위 **Target Replay → Choose macro**에서 `.gdr`, `.gdr.json`, `.gdr2` 파일을 선택합니다.
 5. **Target %**에 1~100 정수를 입력합니다. **Frame offset**은 처음에는 `0`으로 둡니다.

@@ -122,6 +122,8 @@ class TargetPopup : public Popup {
             pl->resetLevelFromStart();
             session.arming = false;
             session.playback.start(goal);
+            log::info("Started {} for level {}, target {}%, first input frame {}",
+                session.filename, session.replay->levelId, goal, session.replay->inputs.front().frame);
         } catch (std::exception const& e) {
             FLAlertLayer::create("Cannot start", e.what(), "OK")->show();
         }
@@ -211,9 +213,9 @@ class $modify(TargetGameLayer, GJBaseGameLayer) {
         if (frame < 0) return;
         session.injecting = true;
         session.playback.dispatch(*session.replay, frame, [this](target::Input const& input) {
-            bool p1 = !input.player2;
-            if (GameManager::get()->getGameVariable("0010")) p1 = !p1;
-            GJBaseGameLayer::handleButton(input.down, input.button, p1);
+            bool player = input.player2;
+            if (GameManager::get()->getGameVariable("0010")) player = !player;
+            GJBaseGameLayer::handleButton(input.down, input.button, player);
         });
         session.injecting = false;
     }
@@ -250,6 +252,8 @@ class $modify(TargetPlay, PlayLayer) {
     void destroyPlayer(PlayerObject* player, GameObject* object) {
         PlayLayer::destroyPlayer(player, object);
         if (session.owner == this && player->m_isDead && session.playback.state == target::RunState::Playing) {
+            log::info("Replay death at frame {}, {:.2f}% after {} inputs",
+                m_gameState.m_currentProgress, getCurrentPercent(), session.playback.next);
             session.playback.observe(getCurrentPercent(), true, false);
             finish(this, false);
         }
