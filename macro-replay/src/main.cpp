@@ -1,4 +1,5 @@
 #include "Replay.hpp"
+#include "../../common/AutomationOwner.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/PlayLayer.hpp>
@@ -13,6 +14,7 @@
 using namespace geode::prelude;
 
 namespace {
+constexpr char ownerID[] = "leokang.target_replay";
 struct Session {
     std::optional<target::Replay> replay;
     target::Playback playback;
@@ -35,6 +37,7 @@ void releaseInputs(PlayLayer* pl) {
 
 void finish(PlayLayer* pl, bool kill) {
     releaseInputs(pl);
+    automation::release(pl, ownerID);
     session.result = fmt::format("{} at {:.2f}% (target {}%)",
         session.playback.state == target::RunState::Reached ? "Target reached" : "Replay failed",
         pl->getCurrentPercent(), session.playback.goal);
@@ -80,7 +83,10 @@ class TargetPopup : public Popup {
                 auto replay = target::loadReplay(*path);
                 session.playback.cancel();
                 session.finishPending = false;
-                if (auto pl = PlayLayer::get()) releaseInputs(pl);
+                if (auto pl = PlayLayer::get(); pl && automation::owns(pl, ownerID)) {
+                    releaseInputs(pl);
+                    automation::release(pl, ownerID);
+                }
                 session.replay = std::move(replay);
                 session.filename = path->filename().string();
                 self->describe();
@@ -108,6 +114,8 @@ class TargetPopup : public Popup {
             offset = std::stoi(value, &used);
             if (used != value.size() || offset < -10 || offset > 10)
                 throw std::runtime_error("Frame offset must be an integer from -10 to 10.");
+            if (!automation::acquire(pl, ownerID))
+                throw std::runtime_error("New Map Autoclear is running. Use Take Over there first.");
             Mod::get()->setSavedValue("frame-offset", offset);
             Mod::get()->setSettingValue<std::int64_t>("target-percent", goal);
             session.playback.cancel();
@@ -132,7 +140,10 @@ class TargetPopup : public Popup {
         session.playback.cancel();
         session.finishPending = false;
         session.result = "Stopped by user";
-        if (auto pl = PlayLayer::get()) releaseInputs(pl);
+        if (auto pl = PlayLayer::get(); pl && automation::owns(pl, ownerID)) {
+            releaseInputs(pl);
+            automation::release(pl, ownerID);
+        }
         onClose(nullptr);
     }
 public:
@@ -237,7 +248,8 @@ class $modify(TargetPlay, PlayLayer) {
     void resetLevel() {
         if (session.owner == this) {
             if (!session.arming) session.playback.cancel();
-            releaseInputs(this);
+            if (automation::owns(this, ownerID)) releaseInputs(this);
+            if (!session.arming) automation::release(this, ownerID);
             if (session.arming && session.replay) GameToolbox::fast_srand(session.replay->seed);
         }
         PlayLayer::resetLevel();
@@ -271,11 +283,13 @@ class $modify(TargetPlay, PlayLayer) {
             session.playback.observe(100, false, true);
             session.result = "Completed 100%";
             releaseInputs(this);
+            automation::release(this, ownerID);
         }
     }
     void onExit() {
         if (session.owner == this) {
-            releaseInputs(this);
+            if (automation::owns(this, ownerID)) releaseInputs(this);
+            automation::release(this, ownerID);
             session.playback.cancel();
             session.owner = nullptr;
             session.finishPending = false;

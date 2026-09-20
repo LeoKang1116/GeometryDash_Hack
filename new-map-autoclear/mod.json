@@ -1,0 +1,12 @@
+{
+    "geode": "5.8.2",
+    "gd": { "mac": "2.2081" },
+    "id": "leokang.new_map_autoclear",
+    "name": "New Map Autoclear",
+    "version": "v0.1.0",
+    "developer": "leokang",
+    "description": "Experimental cube solver with automatic handoff to manual play.",
+    "settings": {
+        "target-percent": { "name": "Manual control at %", "type": "int", "default": 50, "min": 1, "max": 100 }
+    }
+}
